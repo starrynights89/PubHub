@@ -8,7 +8,7 @@ import examples.pubhub.model.Tag;
  * Interface for our Data Access Object to handle database queries related to Books.
  */
 public interface TagDAO {
-	public List<Tag> getAllTags(String tag);
+	public List<Tag> getAllTags();
 	public Tag getTagByISBN(String isbn);
 	
 	public boolean addTag(Tag tag);
