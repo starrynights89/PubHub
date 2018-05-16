@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import examples.pubhub.model.Book;
 import examples.pubhub.model.Tag;
 import examples.pubhub.utilities.DAOUtilities;
 
@@ -24,7 +23,7 @@ public class TagDAOImpl implements TagDAO {
 		List<Tag> tags = new ArrayList<>();
 		try {
 			connection = DAOUtilities.getConnection();	// Get our database connection from the manager
-			String sql = "SELECT * FROM Book_tags";		// Our SQL query
+			String sql = "SELECT * FROM book_tags";		// Our SQL query
 			stmt = connection.prepareStatement(sql);	// Creates the prepared statement from the query
 			
 			ResultSet rs = stmt.executeQuery();			// Queries the database
@@ -36,7 +35,10 @@ public class TagDAOImpl implements TagDAO {
 
 				// Each variable in our Book object maps to a column in a row from our results.
 				tag.setIsbn13(rs.getString("isbn_13"));
-				tag.setTag(rs.getString("tag_name"));
+				tag.setTag(rs.getString("tag_name_genre"));
+				
+				// Finally we add it to the list of Tag objects returned by this query.
+				tags.add(tag);
 			}
 			
 			rs.close();
@@ -53,28 +55,109 @@ public class TagDAOImpl implements TagDAO {
 	}
 	
 	/*------------------------------------------------------------------------------------------------*/
-
+	
 	@Override
 	public Tag getTagByISBN(String isbn) {
-		// TODO Auto-generated method stub
-		return null;
+		Tag tag = null;
+		
+		try {
+			connection = DAOUtilities.getConnection();
+			String sql = "SELECT * FROM book_tags WHERE isbn_13 = ?";
+			stmt = connection.prepareStatement(sql);
+			
+			stmt.setString(1, isbn);
+			ResultSet rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				tag = new Tag();
+				tag.setIsbn13(rs.getString("isbn_13"));
+				tag.setTag(rs.getString("tag_name_genre"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			closeResources();
+		}
+		
+		return tag;
 	}
+	
+	/*------------------------------------------------------------------------------------------------*/
 
 	@Override
 	public boolean addTag(Tag tag) {
-		// TODO Auto-generated method stub
-		return false;
+		try {
+			connection = DAOUtilities.getConnection();
+			String sql = "INSERT INTO book_tags VALUES (?, ?, ?)"; // Were using a lot of ?'s here...
+			stmt = connection.prepareStatement(sql);
+			
+			// But that's okay, we can set them all before we execute
+			stmt.setString(1, tag.getIsbn13());
+			stmt.setString(2, tag.getTag());
+			
+			stmt.setBytes(3, tag.getContent());
+			
+			// If we were able to add our book to the DB, we want to return true. 
+			// This if statement both executes our query, and looks at the return 
+			// value to determine how many rows were changed
+			if (stmt.executeUpdate() != 0)
+				return true;
+			else
+				return false;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		} finally {
+			closeResources();
+		}
 	}
+	
+	/*------------------------------------------------------------------------------------------------*/
 
 	@Override
 	public boolean updateTag(Tag tag) {
-		// TODO Auto-generated method stub
-		return false;
+		try {
+			connection = DAOUtilities.getConnection();
+			String sql = "UPDATE book_tags SET tag_name_genre=? WHERE isbn_13=?";
+			stmt = connection.prepareStatement(sql);
+			
+			stmt.setString(1, tag.getIsbn13());
+			stmt.setString(2, tag.getTag());
+			
+			System.out.println(stmt);
+			
+			if (stmt.executeUpdate() != 0)
+				return true;
+			else
+				return false;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		} finally {
+			closeResources();
+		}
 	}
 	
+	/*------------------------------------------------------------------------------------------------*/
+	
+	// Closing all resources is important, to prevent memory leaks. 
+	// Ideally, you really want to close them in the reverse-order you open them
 	private void closeResources() {
-		// TODO Auto-generated method stub
+		try {
+			if (stmt != null)
+				stmt.close();
+		} catch (SQLException e) {
+			System.out.println("Could not close statement!");
+			e.printStackTrace();
+		}
 		
+		try {
+			if (connection != null)
+				connection.close();
+		} catch (SQLException e) {
+			System.out.println("Could not close connection!");
+			e.printStackTrace();
+		}
 	}
-
+	
 }
