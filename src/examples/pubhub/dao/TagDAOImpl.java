@@ -35,7 +35,7 @@ public class TagDAOImpl implements TagDAO {
 
 				// Each variable in our Book object maps to a column in a row from our results.
 				tag.setIsbn13(rs.getString("isbn_13"));
-				tag.setTag(rs.getString("tag_name_genre"));
+				tag.setTag(rs.getString("tag_name"));
 				
 				// Finally we add it to the list of Tag objects returned by this query.
 				tags.add(tag);
@@ -71,7 +71,7 @@ public class TagDAOImpl implements TagDAO {
 			if (rs.next()) {
 				tag = new Tag();
 				tag.setIsbn13(rs.getString("isbn_13"));
-				tag.setTag(rs.getString("tag_name_genre"));
+				tag.setTag(rs.getString("tag_name"));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
